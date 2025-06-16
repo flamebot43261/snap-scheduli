@@ -1,2 +1,3 @@
 # Snap Scheduli
-A smart calendar event creation tool
+
+This is the README for the React Native calendar synchronization application.

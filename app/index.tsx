@@ -1,19 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text } from 'react-native';
+import ApiCall from './apiCall';
 
 const App = () => {
-  const [message, setMessage] = useState('');
-
-  useEffect(() => {
-    fetch('http://localhost:3000/api/data') // Replace with your backend URL
-      .then(response => response.json())
-      .then(data => setMessage(data.message))
-      .catch(error => console.error('Error fetching data:', error));
-  }, []);
+  const [clickedButton, setClickedButton] = useState(false);
+  const handleClick = () => {
+    setClickedButton(true);
+  };
 
   return (
     <View>
-      <Text>{message}</Text>
+      <button onClick={handleClick}>Click button</button>
+      {clickedButton && <ApiCall />}
     </View>
   );
 };

@@ -5,7 +5,7 @@
       "name": "Run Backend",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/backend/server.py",
+      "program": "${command:python.interpreterPath}",
       "console": "integratedTerminal"
     }
   ]

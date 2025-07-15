@@ -10,8 +10,7 @@ const App = () => {
 
   return (
     <View>
-      <button onClick={handleClick}>Click button</button>
-      {clickedButton && <ApiCall />}
+      <ApiCall />
     </View>
   );
 };

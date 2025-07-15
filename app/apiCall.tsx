@@ -6,16 +6,31 @@ const ApiCall = () => {
     
     const [message, setMessage] = useState('');
 
-    useEffect(() => {
-      fetch('http://localhost:3000/api/data') // Replace with your backend URL
-        .then(response => response.json())
-        .then(data => setMessage(data.message))
-        .catch(error => console.error('Error fetching data:', error));
-    }, []);
+    const handleSubmit = () => {
+
+      const formData = new FormData();
+      const fileInput = document.getElementById('fileInput') as HTMLInputElement | null;
+      if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        console.error('No file selected.');
+        return;
+      }
+      formData.append('file', fileInput.files[0]);
+
+      fetch('http://localhost:3000/api/data', {
+          method: 'POST',
+          body: formData
+      })
+      .then(response => response.json())
+      .then(data => setMessage(data.message))
+      .catch(error => console.error('Error fetching data:', error));
+    }
 
     return (
         <View>
-            <Text>{message}</Text>
+            <form id="uploadForm" onSubmit={handleSubmit}>
+                <input type="file" name="file" id="fileInput" />
+                <button type="submit">Upload</button>
+            </form>
         </View>
     );
 }

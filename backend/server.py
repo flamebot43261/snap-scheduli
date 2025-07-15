@@ -5,7 +5,7 @@ app = Flask(__name__)
 CORS(app) # Enable CORS for all routes
 
 @app.route('/api/data', methods=['GET'])
-def get_data():
+def ConvertPictureToICS():
     data = {"message": "Hello from Python backend!"}
     return jsonify(data)
 

@@ -5,32 +5,46 @@ import { View, Text } from 'react-native';
 const ApiCall = () => {
     
     const [message, setMessage] = useState('');
+    const [endapi, setEndapi] = useState(false);
+    const [file, setFile] = useState<File | null>(null);
+
 
     const handleSubmit = () => {
 
-      const formData = new FormData();
-      const fileInput = document.getElementById('fileInput') as HTMLInputElement | null;
-      if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-        console.error('No file selected.');
-        return;
+      if (!file) {
+          console.error('No file selected.');
+          return;
       }
-      formData.append('file', fileInput.files[0]);
+      const formData = new FormData();
+      formData.append('file', file);
 
-      fetch('http://localhost:3000/api/data', {
+      fetch('http://localhost:3000/api/uploadImage', {
           method: 'POST',
           body: formData
       })
       .then(response => response.json())
       .then(data => setMessage(data.message))
       .catch(error => console.error('Error fetching data:', error));
+      setEndapi(true);
     }
 
     return (
         <View>
-            <form id="uploadForm" onSubmit={handleSubmit}>
-                <input type="file" name="file" id="fileInput" />
-                <button type="submit">Upload</button>
-            </form>
+            <div>
+                <input
+                    type="file"
+                    onChange={(event) => {
+                        const files = event.target.files;
+                        if (files && files.length > 0) {
+                            setFile(files[0]);
+                        } else {
+                            setFile(null);
+                        }
+                    }}
+                />
+                <button onClick={handleSubmit}>Upload File</button>
+            </div>
+            {endapi && <Text>{message}</Text>}
         </View>
     );
 }

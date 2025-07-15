@@ -1,15 +1,19 @@
-import { Text, View } from "react-native";
+import React, { useEffect, useState } from 'react';
+import { View, Text } from 'react-native';
+import ApiCall from './apiCall';
 
-export default function Index() {
+const App = () => {
+  const [clickedButton, setClickedButton] = useState(false);
+  const handleClick = () => {
+    setClickedButton(true);
+  };
+
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
+    <View>
+      <button onClick={handleClick}>Click button</button>
+      {clickedButton && <ApiCall />}
     </View>
   );
-}
+};
+
+export default App;

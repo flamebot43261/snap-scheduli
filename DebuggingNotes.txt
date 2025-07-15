@@ -1,0 +1,10 @@
+Python Debugging:
+cd into the "backend" folder 
+Run the command "venv\Scripts\activate" to activate the virtual environment
+If Pythons interpretar path is not set to the virtual environment follow these steps:
+    - Ctrl+Shift+P to the Command Pallete
+    - Search for "Python: Select Interpretar"
+    - Enter Interpreter Path
+    - Enter the path "<YOUR_PATH>/backend/venv/Scripts/python.exe
+Now the debugger will work
+To deactivate run "deactivate"

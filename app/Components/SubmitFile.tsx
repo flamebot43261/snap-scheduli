@@ -60,7 +60,7 @@ const SubmitFile: React.FC<CustomFileUploadProps> = ({ width, height }) => {
             <br />
             <br />
             <button onClick={handleSubmit} className={styles.uploadButton}>
-            Upload File
+            Submit
             </button>     
         </>
 

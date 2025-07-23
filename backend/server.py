@@ -1,5 +1,17 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS 
+from flask import Flask, request, jsonify, send_file
+from flask_cors import CORS
+import os
+import io
+from datetime import datetime, timedelta
+from google.cloud import vision 
+from dateutil import parser as date_parser 
+from ics import Calendar, Event as IcsEvent 
+import re 
+import logging 
+from OCRService import OCRService
+from ScheduleParser import ScheduleParser
+from ICSExporter import ICSExporter
+from event import Event
 
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:8081"], supports_credentials=True, allow_headers="*")
@@ -35,8 +47,4 @@ def shareICS():
     return jsonify({"message": "Sharing ICS file"}), 200
 
 if __name__ == '__main__':
-    app.run(debug=True, port=3000)  # Run on port 3000
-
-
-
-
+    app.run(debug=True, port=3000) 

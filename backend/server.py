@@ -1,28 +1,17 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS 
 
-
-from google.cloud import vision 
-from ics import Calendar, Event 
-import os 
-import io #might need for file access 
-from PIL import Image #image processing
-from dateutil import parser as date_parser #
-import OCRService as processFile
-
 app = Flask(__name__)
-CORS(app) # Enable CORS for all routes
+CORS(app, origins=["http://localhost:8081"], supports_credentials=True, allow_headers="*")
 
 @app.route('/api/uploadImage', methods=['POST'])
 def uploadImage():
-    if 'file' not in request.files:
+    print("Request received")
+    if 'image' not in request.files:
         return jsonify({"ERROR: NO FILE UPLOADED"}), 400
-    file = request.files['file']
+    file = request.files['image']
     if file.filename == '':
         return jsonify({"ERROR: NO FILE SELECTED"}), 400
-    
-    # Process the file and convert it to ICS format
-    processFile.detect_text(file)
 
 
     return jsonify({"message": "File named " + file.filename + " converted successfully!"}), 200

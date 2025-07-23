@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
+import { Image } from 'react-native';
+import ApiCall from '../apiCall';
 import styles from '../app.module.css'; // Assuming you have a CSS file for styling
-
 
 interface CustomFileUploadProps {
   width?: string;
@@ -18,6 +19,12 @@ const SubmitFile: React.FC<CustomFileUploadProps> = ({ width, height }) => {
     };
 
     const handleSubmit = () => {
+        const file = inputRef.current?.files?.[0];
+        if (!file) {
+            console.error('No file selected.');
+            return;
+        }
+        ApiCall(file);
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,8 +45,8 @@ const SubmitFile: React.FC<CustomFileUploadProps> = ({ width, height }) => {
             {fileName ? (
                 <p>{fileName}</p>
             ) : (
-                <div>
-                    <img src="../../assets/images/FileIcon.png" alt="Upload Icon" />
+                <div style={{ justifyItems: 'center'}}>
+                    <Image source={require('../../assets/images/FileIcon.png')} style={{ width: 40, height: 40 }} accessibilityLabel="Upload Icon" />
                     <p>Click or drag a file here</p>
                 </div>
             )}
@@ -50,6 +57,8 @@ const SubmitFile: React.FC<CustomFileUploadProps> = ({ width, height }) => {
                 className={styles.hiddenInput}
             />
             </div>   
+            <br />
+            <br />
             <button onClick={handleSubmit} className={styles.uploadButton}>
             Upload File
             </button>     

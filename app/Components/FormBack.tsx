@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text } from 'react-native';
+import React from 'react';
+import { Image } from 'react-native';
+// No need to import Logo for require()
 import styles from '../app.module.css'; // Assuming you have a CSS file for styling
 import SubmitFile from './SubmitFile';
 
@@ -8,8 +9,8 @@ const FormBack = () => {
     return (
         <>
             <div className={styles.box}>
-                <h1>SnapScheduli</h1>
-                <SubmitFile width="400px" height="250px"/>
+                <Image source={require('../../assets/images/SSLogo.png')} style={{ width: 300, height: 300 }} accessibilityLabel="Logo" />
+                <SubmitFile width="auto" height="50px"/>
             </div>
         </>
     );

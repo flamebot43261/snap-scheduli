@@ -1,52 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text } from 'react-native';
 
 
-const ApiCall = () => {
-    
-    const [message, setMessage] = useState('');
-    const [endapi, setEndapi] = useState(false);
-    const [file, setFile] = useState<File | null>(null);
+function ApiCall(fileInput: File) {
 
-
-    const handleSubmit = () => {
-
-      if (!file) {
+      if (!fileInput) {
           console.error('No file selected.');
           return;
       }
-      const formData = new FormData();
-      formData.append('file', file);
 
-      fetch('http://localhost:3000/api/uploadImage', {
-          method: 'POST',
-          body: formData
-      })
-      .then(response => response.json())
-      .then(data => setMessage(data.message))
-      .catch(error => console.error('Error fetching data:', error));
-      setEndapi(true);
-    }
+    const formData = new FormData();
+    formData.append('image', fileInput);
 
-    return (
-        <View>
-            <div>
-                <input
-                    type="file"
-                    onChange={(event) => {
-                        const files = event.target.files;
-                        if (files && files.length > 0) {
-                            setFile(files[0]);
-                        } else {
-                            setFile(null);
-                        }
-                    }}
-                />
-                <button onClick={handleSubmit}>Upload File</button>
-            </div>
-            {endapi && <Text>{message}</Text>}
-        </View>
-    );
+    fetch('http://localhost:3000/api/uploadImage', {
+        method: 'POST',
+        body: formData,
+    })
+    .then(response => response.json())
+    .then(data => console.log(data))
+    .catch(error => console.error(error));
 }
 
 

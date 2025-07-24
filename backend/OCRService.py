@@ -1,41 +1,40 @@
-from server import processFile
+import io
+from google.cloud import vision
+import logging
+
+class OCRService:
+    def __init__(self,vision_client: vision.ImageAnnotatorClient):
+        self.client = vision_client
+        logging.info("OCRService initialized.")
+
+    def process_image(self, image_data: bytes) -> str:
+        #check if the object has initialized the OCR Service API
+        if not self.client:
+            raise Exception("Google Cloud Vision client is not initialized in OCRService.")
+        try:
+            image = vision.Image(content=image_data)
+            logging.info("Sending image to Google Cloud Vision API...")
+            # Use document_text_detection for better parsing of structured text like schedules
+            response = self.client.document_text_detection(image=image)
+            full_text = response.full_text_annotation.text
+            logging.info("Received response from Google Cloud Vision API.")
+            return full_text
+        except Exception as e:
+            logging.error(f"Error processing image with OCRService: {e}")
+            raise
 
 
-def processImage(file):
-    # Implement the conversion logic here
-    pass
-
-def parseText():
-    pass
-
-
-def detect_text(path):
-    """Detects text in the file."""
-    from google.cloud import vision
-
-    client = vision.ImageAnnotatorClient()
-    path = "C:\\Users\\lukeb\\OneDrive - University of Cincinnati\\Documents for school\\4.) 2023 Fall Semester\\ENED\\CFU\\for loop"
-
-    with open(path, "rb") as image_file:
-        content = image_file.read()
-
-    image = vision.Image(content=content)
-
-    response = client.text_detection(image=image)
-    texts = response.text_annotations
-    print("Texts:")
-
-    for text in texts:
-        print(f'\n"{text.description}"')
-
-        vertices = [
-            f"({vertex.x},{vertex.y})" for vertex in text.bounding_poly.vertices
-        ]
-
-        print("bounds: {}".format(",".join(vertices)))
-
-    if response.error.message:
-        raise Exception(
-            "{}\nFor more info on error messages, check: "
-            "https://cloud.google.com/apis/design/errors".format(response.error.message)
-        )
+#testing OCRService class
+# if __name__ == "__main__":
+#     file_path = "/mnt/c/Users/flame/Downloads/test_image.png"
+#     client = vision.ImageAnnotatorClient()
+#     ocr_service = OCRService(client)
+#     with open(file_path, "rb") as img_file:
+#         image_bytes = img_file.read()
+#     try:
+#         result = ocr_service.process_image(image_bytes)
+#         print("OCR Result:")
+#         print(result)
+#     except Exception as e:
+#         print(f"Error during OCR processing: {e}")
+    

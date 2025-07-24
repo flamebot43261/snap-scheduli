@@ -1,31 +1,84 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS 
+from flask import Flask, request, jsonify, send_file
+from flask_cors import CORS
+import os
+import io
+from datetime import datetime, timedelta
+from google.cloud import vision
+from dateutil import parser as date_parser
+from ics import Calendar, Event as IcsEvent
+import re
+import logging
+from OCRService import OCRService
+from ScheduleParser import ScheduleParser
+from ICSExporter import ICSExporter
+from event import Event
 
-
-from google.cloud import vision 
-from ics import Calendar, Event 
-import os 
-import io #might need for file access 
-from PIL import Image #image processing
-from dateutil import parser as date_parser #
-import OCRService as processFile
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(levelname)s:%(name)s:%(message)s"
+)
 
 app = Flask(__name__)
-CORS(app) # Enable CORS for all routes
+CORS(app, origins=["http://localhost:8081"], supports_credentials=True, allow_headers="*")
 
-@app.route('/api/uploadImage', methods=['POST'])
-def uploadImage():
+#initialize Google Cloud Vision Client
+try:
+    vision_client = vision.ImageAnnotatorClient()
+    logging.info("Google Cloud Vision client initialized successfully.")
+except Exception as e:
+    logging.error(f"Failed to initialize Google Cloud Vision client: {e}")
+    vision_client = None
+
+# Initialize service classes
+ocr_service_instance = OCRService(vision_client)
+schedule_parser_instance = ScheduleParser()
+ics_exporter_instance = ICSExporter()
+
+@app.route('/api/convert-schedule', methods=['POST'])
+#main function logic to parse requests from app and 
+# orchestrate class calls.
+def convert_picture_to_ics():
+    logging.info("Received request to /api/convert-schedule")
+
+    #validate file upload
     if 'file' not in request.files:
-        return jsonify({"ERROR: NO FILE UPLOADED"}), 400
+        logging.warning("No 'file' uploaded to the request.")
+        return jsonify({"error": "No file uploaded to the request"}), 400
     file = request.files['file']
     if file.filename == '':
-        return jsonify({"ERROR: NO FILE SELECTED"}), 400
+        logging.warning("No selected file name.")
+        return jsonify({"error": "No selected file."}), 400
     
-    # Process the file and convert it to ICS format
-    processFile.detect_text(file)
+    if not vision_client:
+        logging.error("OCR service not initialized. Cannot process request.")
+        return jsonify({"error": "Backend OCR service not configured. Please check server logs."}), 500
+    
 
+    try: 
+        #Read content
+        image_content=file.read()
+        logging.info(f"File recieved: {file.filename}. Size: {len(image_content)} bytes.")
+        #Perform OCR
+        raw_text=ocr_service_instance.process_image(image_content)
+        logging.info("OCR Service returned raw text.")
+        #Parse text into event objects
+        logging.info("Parsing raw text into event objects...")
+        #define recurrence rule (if applicable)
+        
+        #TODO: implement fetching recurrence rule functionality
 
-    return jsonify({"message": "File named " + file.filename + " converted successfully!"}), 200
+        #TODO:pass raw text and dates into parser
+
+        #TODO: Generate .ics file
+        # logging.info("Generating ICS file...")
+        # ics_content=ics_exporter_instance.generate_ics(raw_text, start, end)
+        # logging.info("ICS file generated successfully.")
+
+        #TODO: Send .ics to frontend
+
+    except Exception as e:
+        logging.exception(f"An unexpected error has occured during processing: {e}")
+        vision_client= None
 
 
 @app.route('/api/accessEditor', methods=['GET'])
@@ -46,8 +99,4 @@ def shareICS():
     return jsonify({"message": "Sharing ICS file"}), 200
 
 if __name__ == '__main__':
-    app.run(debug=True, port=3000)  # Run on port 3000
-
-
-
-
+    app.run(debug=True, port=3000) 

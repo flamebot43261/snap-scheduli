@@ -18,13 +18,30 @@ const SubmitFile: React.FC<CustomFileUploadProps> = ({ width, height }) => {
         inputRef.current?.click();
     };
 
+    const [error, setError] = useState<string | boolean>(false);
+
     const handleSubmit = () => {
         const file = inputRef.current?.files?.[0];
         if (!file) {
             console.error('No file selected.');
+            setError("No file selected");
             return;
         }
-        ApiCall(file);
+
+        try{
+            const response = ApiCall(file);
+            if (response?.error){
+                setError(true);
+            }
+            if (response?.success) {
+                setError(false);
+                console.log("Upload successful:", response?.message)
+            }
+        }
+        catch (err) {
+        setError("An error occurred while uploading. Please try again.");
+        console.error(err);
+        }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,6 +54,8 @@ const SubmitFile: React.FC<CustomFileUploadProps> = ({ width, height }) => {
 
     return (
         <>
+            {error && <p style={{ color: 'red', fontWeight: 'bold' }}>{error}</p>} 
+
             <div
             className={styles.uploadBox}
             style={{ width, height }}

@@ -8,5 +8,6 @@ class ScheduleParser:
         logging.info("ScheduleParser initialized.")
     
     def parse_text(self, raw_text: str, semester_start_date: datetime.date, semester_end_date: datetime.date) -> list:
+        #TODO: implement parsing into event items after receiving raw data from OCR
         pass
     

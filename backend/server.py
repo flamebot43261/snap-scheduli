@@ -29,19 +29,56 @@ except Exception as e:
     logging.error(f"Failed to initialize Google Cloud Vision client: {e}")
     vision_client = None
 
+# Initialize service classes
+ocr_service_instance = OCRService(vision_client)
+schedule_parser_instance = ScheduleParser()
+ics_exporter_instance = ICSExporter()
 
+@app.route('/api/convert-schedule', methods=['POST'])
+#main function logic to parse requests from app and 
+# orchestrate class calls.
+def convert_picture_to_ics():
+    logging.info("Received request to /api/convert-schedule")
 
-@app.route('/api/uploadImage', methods=['POST'])
-def uploadImage():
-    print("Request received")
-    if 'image' not in request.files:
-        return jsonify({"ERROR: NO FILE UPLOADED"}), 400
-    file = request.files['image']
+    #validate file upload
+    if 'file' not in request.files:
+        logging.warning("No 'file' uploaded to the request.")
+        return jsonify({"error": "No file uploaded to the request"}), 400
+    file = request.files['file']
     if file.filename == '':
-        return jsonify({"ERROR: NO FILE SELECTED"}), 400
+        logging.warning("No selected file name.")
+        return jsonify({"error": "No selected file."}), 400
+    
+    if not vision_client:
+        logging.error("OCR service not initialized. Cannot process request.")
+        return jsonify({"error": "Backend OCR service not configured. Please check server logs."}), 500
+    
 
+    try: 
+        #Read content
+        image_content=file.read()
+        logging.info(f"File recieved: {file.filename}. Size: {len(image_content)} bytes.")
+        #Perform OCR
+        raw_text=ocr_service_instance.process_image(image_content)
+        logging.info("OCR Service returned raw text.")
+        #Parse text into event objects
+        logging.info("Parsing raw text into event objects...")
+        #define recurrence rule (if applicable)
+        
+        #TODO: implement fetching recurrence rule functionality
 
-    return jsonify({"message": "File named " + file.filename + " converted successfully!"}), 200
+        #TODO:pass raw text and dates into parser
+
+        #TODO: Generate .ics file
+        # logging.info("Generating ICS file...")
+        # ics_content=ics_exporter_instance.generate_ics(raw_text, start, end)
+        # logging.info("ICS file generated successfully.")
+
+        #TODO: Send .ics to frontend
+
+    except Exception as e:
+        logging.exception(f"An unexpected error has occured during processing: {e}")
+        vision_client= None
 
 
 @app.route('/api/accessEditor', methods=['GET'])

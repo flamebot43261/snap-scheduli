@@ -38,8 +38,6 @@ yarn-error.*
 
 app-example
 
-.venv/
-
 backend/__pycache__/
 
 config/

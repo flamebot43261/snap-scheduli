@@ -20,7 +20,9 @@ class ScheduleParser:
             'Saturday': 5, 'Sat': 5,
             'Sunday': 6, 'Sun': 6
         }
-        self.event_types = "(?:Lecture|Laboratory|Recitation|Seminar|Studio|Discussion|Lab|Course|Class|Tutorial)"
+        self.event_types_list = ['Lecture', 'Laboratory', 'Recitation', 'Seminar', 'Studio', 'Discussion', 'Lab', 'Course', 'Class', 'Tutorial']
+        self.event_types_pattern = "(?:" + "|".join(self.event_types_list) + ")"
+
 
     def _get_bbox_coords(self, bbox_vertices):
         """Extracts min/max X/Y from a list of bounding box vertices."""
@@ -38,20 +40,48 @@ class ScheduleParser:
         overlap_end = min(max_x1, max_x2)
         if overlap_start < overlap_end:
             overlap_width = overlap_end - overlap_start
-            return overlap_width / (max_x1 - min_x1) >= threshold or \
-                   overlap_width / (max_x2 - min_x2) >= threshold
+            width1 = max_x1 - min_x1
+            width2 = max_x2 - min_x2
+            
+            return (width1 > 0 and overlap_width / width1 >= threshold) or \
+                   (width2 > 0 and overlap_width / width2 >= threshold)
         return False
 
-    def _is_overlapping_y(self, bbox1, bbox2, threshold=0.5):
-        _, _, min_y1, max_y1 = bbox1
-        _, _, min_y2, max_y2 = bbox2
-        overlap_start = max(min_y1, min_y2)
-        overlap_end = min(max_y1, max_y2)
-        if overlap_start < overlap_end:
-            overlap_height = overlap_end - overlap_start
-            return overlap_height / (max_y1 - min_y1) >= threshold or \
-                   overlap_height / (max_y2 - min_y2) >= threshold
-        return False
+    def _group_words_by_proximity(self, words, y_threshold_multiplier=1.5):
+        """Groups words into blocks based on vertical proximity."""
+        if not words:
+            return []
+        
+        # Sort words primarily by their top y-coordinate, then by x-coordinate
+        words.sort(key=lambda w: (w['bbox'][2], w['bbox'][0]))
+        
+        blocks = []
+        current_block = [words[0]]
+        
+        for i in range(1, len(words)):
+            prev_word = current_block[-1]
+            current_word = words[i]
+            
+            # Estimate line height from the previous word's height
+            prev_word_height = prev_word['bbox'][3] - prev_word['bbox'][2]
+            vertical_gap_threshold = prev_word_height * y_threshold_multiplier
+            
+            # Check the vertical distance between the bottom of the last word in the block and the top of the current word
+            vertical_gap = current_word['bbox'][2] - prev_word['bbox'][3]
+            
+            if vertical_gap < vertical_gap_threshold:
+                # If the gap is small, the word belongs to the current event block
+                current_block.append(current_word)
+            else:
+                # A large gap indicates a new event block
+                blocks.append(current_block)
+                current_block = [current_word]
+        
+        # Add the last block
+        if current_block:
+            blocks.append(current_block)
+            
+        return blocks
 
     def parse_text(self, full_text_annotation: vision.TextAnnotation, semester_start_date: datetime.date, semester_end_date: datetime.date) -> list:
         events = []
@@ -60,14 +90,16 @@ class ScheduleParser:
             logging.warning("No text annotation or pages found in OCR response.")
             return []
 
-        word_elements = []
-        for page in full_text_annotation.pages:
-            for block in page.blocks:
-                for paragraph in block.paragraphs:
-                    for word in paragraph.words:
-                        word_text = ''.join([symbol.text for symbol in word.symbols])
-                        bbox = self._get_bbox_coords(word.bounding_box.vertices)
-                        word_elements.append({'text': word_text, 'bbox': bbox})
+        word_elements = [
+            {
+                'text': ''.join([symbol.text for symbol in word.symbols]),
+                'bbox': self._get_bbox_coords(word.bounding_box.vertices)
+            }
+            for page in full_text_annotation.pages
+            for block in page.blocks
+            for paragraph in block.paragraphs
+            for word in paragraph.words
+        ]
         
         if not word_elements:
             logging.warning("No words extracted from OCR. Cannot parse events.")
@@ -82,6 +114,7 @@ class ScheduleParser:
         
         day_headers_raw = [] 
         day_header_pattern = re.compile(r'^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Mon|Tue|Wed|Thu|Fri|Sat|Sun)$', re.IGNORECASE)
+        
         header_y_max = max_y_overall * 0.15
 
         for word_elem in word_elements:
@@ -96,19 +129,25 @@ class ScheduleParser:
         day_headers_raw.sort(key=lambda x: x['bbox'][0])
 
         
-        day_columns = [] 
-        for i, header in enumerate(day_headers_raw):
-            x_start = header['bbox'][0] 
-            x_end = None
-            if i + 1 < len(day_headers_raw):
+        # Redefine column boundaries based on midpoints between headers for better accuracy
+        day_columns = []
+        if day_headers_raw:
+            # Calculate center points for each header
+            header_centers = [
+                (h['bbox'][0] + h['bbox'][1]) / 2 for h in day_headers_raw
+            ]
 
-                x_end = day_headers_raw[i+1]['bbox'][0] - 5 
-            else:
+            for i, header in enumerate(day_headers_raw):
+                # Column starts at the midpoint between this and the previous header
+                # For the first header, the column starts at the beginning of the page (x=0)
+                x_start = (header_centers[i-1] + header_centers[i]) / 2 if i > 0 else 0
 
-                x_end = max_x_overall 
-            
-            day_columns.append({'day_name': header['day_name'], 'x_start': x_start, 'x_end': x_end})
-            logging.debug(f"Defined column for {header['day_name']}: X-range [{x_start}, {x_end}]")
+                # Column ends at the midpoint between this and the next header
+                # For the last header, the column extends to the end of the page
+                x_end = (header_centers[i] + header_centers[i+1]) / 2 if i + 1 < len(header_centers) else max_x_overall
+                
+                day_columns.append({'day_name': header['day_name'], 'x_start': x_start, 'x_end': x_end})
+                logging.debug(f"Defined column for {header['day_name']}: X-range [{x_start}, {x_end}]")
 
         if not day_columns:
             logging.warning("No valid day columns could be defined. Cannot parse spatially.")
@@ -118,22 +157,30 @@ class ScheduleParser:
         text_by_day_column = {day['day_name']: [] for day in day_columns}
         
         time_slot_marker_pattern = re.compile(r'^\d{1,2}:\d{2}(?:AM|PM)$', re.IGNORECASE)
+        date_component_pattern = re.compile(r'^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}$', re.IGNORECASE)
+        general_header_footer_pattern = re.compile(r'^(Schedule|Time|PM)$', re.IGNORECASE)
+
 
         for word_elem in word_elements:
             word_text = word_elem['text']
             min_x, max_x, min_y, max_y = word_elem['bbox']
 
-            if day_header_pattern.match(word_text) or time_slot_marker_pattern.match(word_text):
+            if day_header_pattern.match(word_text) or \
+               time_slot_marker_pattern.match(word_text) or \
+               date_component_pattern.match(word_text) or \
+               general_header_footer_pattern.match(word_text):
                 continue
 
             assigned_to_day = False
             for col in day_columns:
                 word_center_x = (min_x + max_x) / 2
-                if col['x_start'] <= word_center_x <= col['x_end']:
+                col_x_start, col_x_end = col['x_start'], col['x_end']
+
+                if col_x_start <= word_center_x <= col_x_end:
                     text_by_day_column[col['day_name']].append(word_elem)
                     assigned_to_day = True
                     break
-                if self._is_overlapping_x(word_elem['bbox'], (col['x_start'], col['x_end'], min_y, max_y), threshold=0.5):
+                if self._is_overlapping_x(word_elem['bbox'], (col['x_start'], col['x_end'], min_y, max_y), threshold=0.1): # 10% overlap
                     text_by_day_column[col['day_name']].append(word_elem)
                     assigned_to_day = True
                     break
@@ -143,29 +190,123 @@ class ScheduleParser:
 
         
         event_regex = re.compile(
-            r'([A-Z]{2,5}[\s\n]*\d{3,4}(?:-[\s\n]*\d{3})?[\s\n]+' + self.event_types + '?)' 
-            r'[\s\n\.-]*?' 
-            r'(\d{1,2}:\d{2}(?:AM|PM))[\s\n]*-[\s\n]*(\d{1,2}:\d{2}(?:AM|PM))' 
-            r'[\s\n\.-]*?' 
-            r'([A-Za-z\s]+[\s\n]*\d{3,4})?'
-            , re.IGNORECASE | re.DOTALL
+            # Group 1: Course Code & Name (e.g., "CS 4071-001 Lecture")
+            # Making department code (like "CS") optional with (?:[A-Z]{2,5}\s*)?
+            r'(?:([A-Z]{2,5}\s*))?(\d{3,4}[A-Z]?\s*(?:-\s*\d{3})?.*?)\s+'
+            
+            # Group 2: Start Time (Optional)
+            # Now more flexible to handle various formats
+            r'(?:(\d{1,2}:\d{2}\s*(?:AM|PM)?)\s*-\s*)?'
+            
+            # Group 3: End Time (Required, but more flexible)
+            r'(\d{1,2}:\d{2}\s*(?:AM|PM)?)'
+            
+            # Group 4: Location (Optional)
+            r'(?:\s+([A-Z\s\d]+))?',
+            re.IGNORECASE | re.DOTALL
         )
+
+        # Backup regex for cases where only an end time is present
+        fallback_regex = re.compile(
+            # Group 1: Course Code & Name
+            r'([A-Z]{0,5}\s*\d{3,4}[A-Z]?\s*(?:-\s*\d{3})?.*?)\s*-\s*'
+            
+            # Group 2: End Time
+            r'(\d{1,2}:\d{2})\s*'
+            
+            # Group 3: Location (Optional)
+            r'([A-Z\s\d]+)?',
+            re.IGNORECASE | re.DOTALL
+        )
+
+        # Extract time markers from the schedule for reference
+        time_markers = []
+        time_marker_pattern = re.compile(r'^(\d{1,2}:\d{2})\s*(AM|PM)?$', re.IGNORECASE)
+        
+        for word_elem in word_elements:
+            word_text = word_elem['text']
+            match = time_marker_pattern.match(word_text)
+            if match:
+                time_str = match.group(1)
+                ampm = match.group(2)
+                if ampm:
+                    time_str += ampm
+                time_markers.append({
+                    'time': time_str,
+                    'y_center': (word_elem['bbox'][2] + word_elem['bbox'][3]) / 2
+                })
+        
+        # Sort time markers by vertical position
+        time_markers.sort(key=lambda m: m['y_center'])
+        logging.debug(f"Identified time markers: {[m['time'] for m in time_markers]}")
 
         for day_name, day_words in text_by_day_column.items():
             if not day_words:
                 logging.info(f"No content words found for {day_name} column.")
                 continue
 
-            day_words.sort(key=lambda x: x['bbox'][2])
+            # Group words into event blocks based on vertical spacing
+            event_blocks = self._group_words_by_proximity(day_words)
 
-            day_text_content = " ".join([w['text'] for w in day_words])
-            logging.debug(f"Combined text for {day_name}:\n{day_text_content}")
+            for block in event_blocks:
+                # Sort words in the block left-to-right, top-to-bottom before joining
+                block.sort(key=lambda w: (w['bbox'][2], w['bbox'][0]))
+                block_text = " ".join([w['text'] for w in block])
+                logging.debug(f"Processing block for {day_name}: {block_text}")
 
-            for match in event_regex.finditer(day_text_content):
-                event_name_raw, start_time_str, end_time_str, location = match.groups()
+                match = event_regex.search(block_text)
+                if not match:
+                    # Try the fallback regex for cases with only end time
+                    match = fallback_regex.search(block_text)
+                    if match:
+                        course_info, end_time_str, location = match.groups()
+                        # Add default department code if missing
+                        event_name_raw = course_info if course_info.upper().startswith('CS') else f"CS {course_info}"
+                        
+                        # Get vertical center of this block
+                        block_y_center = sum(w['bbox'][2] + w['bbox'][3] for w in block) / (2 * len(block))
+                        
+                        # Find the closest time marker above this block
+                        start_time_str = None
+                        for i, marker in enumerate(time_markers):
+                            if marker['y_center'] < block_y_center and (i+1 >= len(time_markers) or time_markers[i+1]['y_center'] > block_y_center):
+                                start_time_str = marker['time']
+                                logging.info(f"Inferred start time '{start_time_str}' for block at y={block_y_center} based on position")
+                                break
+                                
+                        if not start_time_str:
+                            # If we couldn't infer the start time, skip this block
+                            logging.warning(f"Cannot determine start time for: {block_text}")
+                            continue
+                    else:
+                        continue
+                else:
+                    # Original regex worked - handle normally
+                    dept_code, course_details, start_time_str, end_time_str, location = match.groups()
+                    
+                    # Combine department code (if present) with course details
+                    if dept_code:
+                        event_name_raw = dept_code + course_details
+                    else:
+                        # If department code is missing, prepend "CS " as a fallback since this is for CS classes
+                        event_name_raw = "CS " + course_details
                 
-                event_name = ' '.join(event_name_raw.split()).strip()
-                location = ' '.join(location.split()).strip() if location else None
+                # If start time is missing from the match, the single time found is the end time.
+                # We will use the end time as the start time as well for these cases.
+                if not start_time_str and end_time_str:
+                    logging.warning(f"Start time missing for block: '{block_text}'. Using end time '{end_time_str}' as start time.")
+                    start_time_str = end_time_str
+                
+                # If no time information could be parsed at all, skip the block.
+                if not start_time_str or not end_time_str:
+                    logging.warning(f"Skipping block with insufficient time information: {block_text}")
+                    continue
+
+                # Clean up extracted strings
+                event_name = ' '.join(event_name_raw.replace('\n', ' ').split()).strip()
+                start_time_str = ''.join(start_time_str.split())
+                end_time_str = ''.join(end_time_str.split())
+                location = ' '.join(location.replace('\n', ' ').split()).strip() if location else None
                 
                 logging.info(f"Detected event in {day_name}: Name='{event_name}', Start='{start_time_str}', End='{end_time_str}', Location='{location}'")
                 
@@ -219,10 +360,16 @@ if __name__ == "__main__":
 
     parser = ScheduleParser()
 
-    semester_start = datetime.date(2025, 7, 1)
-    semester_end = datetime.date(2025, 12, 31)
+    semester_start = datetime.date(2025, 5, 12)
+    semester_end = datetime.date(2025, 5, 16)
 
     print("Parser cleaned Result:")
 
     events = parser.parse_text(result, semester_start, semester_end)
     print("------------------------------------")
+
+    print("List of Events: \n")
+
+    for event in events: 
+        print(event)
+        print("\n")

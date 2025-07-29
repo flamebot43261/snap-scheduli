@@ -369,29 +369,41 @@ class ScheduleParser:
                     logging.error(f"Invalid day name '{day_name}' encountered. Skipping event.")
                     continue
 
+                # Find first occurrence of this day of week within the semester
                 first_occurrence_date = semester_start_date
                 while first_occurrence_date.weekday() != day_index:
                     first_occurrence_date += timedelta(days=1)
-
-                try:
-                    event_start_datetime = date_parser.parse(f"{first_occurrence_date} {start_time_str}")
-                    event_end_datetime = date_parser.parse(f"{first_occurrence_date} {end_time_str}")
-                except Exception as e:
-                    logging.error(f"Could not parse datetime for event '{event_name}' on '{day_name}': {e}")
-                    continue
-
-                rrule_until_str = semester_end_date.strftime('%Y%m%dT235959Z')
-                recurrence_rule = f"FREQ=WEEKLY;UNTIL={rrule_until_str}"
                 
-                new_event = Event(
-                    name=event_name,
-                    start_time=event_start_datetime,
-                    end_time=event_end_datetime,
-                    location=location,
-                    recurrence_rule=recurrence_rule
-                )
-                events.append(new_event)
-                logging.info(f"Successfully created event: {new_event.name} on {day_name}")
+                # Generate all occurrences of this event within the semester date range
+                current_date = first_occurrence_date
+                while current_date <= semester_end_date:
+                    try:
+                        # Create datetime objects for this specific occurrence
+                        event_start_datetime = date_parser.parse(f"{current_date.isoformat()} {start_time_str}")
+                        event_end_datetime = date_parser.parse(f"{current_date.isoformat()} {end_time_str}")
+                        
+                        # Handle case where end time is on the next day (e.g., evening classes)
+                        if event_end_datetime < event_start_datetime:
+                            event_end_datetime += timedelta(days=1)
+                        
+                        # Create event without recurrence rule (since we're creating individual instances)
+                        new_event = Event(
+                            name=event_name,
+                            start_time=event_start_datetime,
+                            end_time=event_end_datetime,
+                            location=location,
+                            recurrence_rule=None  # No recurrence rule needed for individual events
+                        )
+                        events.append(new_event)
+                        logging.debug(f"Created event instance: {new_event.name} on {current_date.isoformat()}")
+                        
+                    except Exception as e:
+                        logging.error(f"Could not create event for '{event_name}' on {current_date.isoformat()}: {e}")
+                    
+                    # Move to next week
+                    current_date += timedelta(days=7)
+                
+                logging.info(f"Successfully created all instances for: {event_name} on {day_name}")
         
         return events
 
@@ -415,7 +427,7 @@ if __name__ == "__main__":
     parser = ScheduleParser()
 
     semester_start = datetime.date(2025, 5, 12)
-    semester_end = datetime.date(2025, 5, 16)
+    semester_end = datetime.date(2025, 5, 23)
 
     print("Parser cleaned Result:")
 

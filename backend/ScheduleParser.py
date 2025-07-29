@@ -304,8 +304,62 @@ class ScheduleParser:
 
                 # Clean up extracted strings
                 event_name = ' '.join(event_name_raw.replace('\n', ' ').split()).strip()
-                start_time_str = ''.join(start_time_str.split())
-                end_time_str = ''.join(end_time_str.split())
+                
+                # Clean time strings and ensure they have AM/PM designation
+                start_time_str = ''.join(start_time_str.split()) if start_time_str else None
+                end_time_str = ''.join(end_time_str.split()) if end_time_str else None
+                
+                # Add AM/PM if missing based on context
+                if start_time_str and not ('AM' in start_time_str.upper() or 'PM' in start_time_str.upper()):
+                    # For course schedules, apply reasonable defaults:
+                    # - Before 7:00 is assumed to be PM (afternoon/evening classes)
+                    # - 7:00-11:59 is assumed to be AM (morning classes)
+                    # - 12:00-6:59 is assumed to be PM (afternoon/evening classes)
+                    hour = int(start_time_str.split(':')[0])
+                    if hour >= 7 and hour < 12:
+                        start_time_str += 'AM'
+                    else:
+                        start_time_str += 'PM'
+                
+                if end_time_str and not ('AM' in end_time_str.upper() or 'PM' in end_time_str.upper()):
+                    hour = int(end_time_str.split(':')[0])
+                    if hour >= 7 and hour < 12:
+                        end_time_str += 'AM'
+                    else:
+                        end_time_str += 'PM'
+                
+                # Use vertical position in the schedule to infer time context
+                # (Remove the hardcoded course-specific time assignments)
+                block_y_center = sum(w['bbox'][2] + w['bbox'][3] for w in block) / (2 * len(block))
+                
+                # If we have time markers from the schedule, use them to verify/correct our times
+                if time_markers:
+                    # Find the closest time marker row to this block's vertical position
+                    closest_marker = None
+                    min_distance = float('inf')
+                    
+                    for marker in time_markers:
+                        distance = abs(marker['y_center'] - block_y_center)
+                        if distance < min_distance:
+                            min_distance = distance
+                            closest_marker = marker
+                    
+                    # If we found a close time marker and the parsed time looks suspicious,
+                    # consider using the marker's time information
+                    if closest_marker and min_distance < max_y_overall * 0.05:  # Within 5% of the vertical height
+                        marker_time = closest_marker['time']
+                        logging.debug(f"Block at y={block_y_center:.1f} is close to time marker {marker_time} at y={closest_marker['y_center']:.1f}")
+                        
+                        # Extract hours from marker and parsed times for comparison
+                        marker_hour = int(marker_time.split(':')[0])
+                        parsed_start_hour = int(start_time_str.split(':')[0]) if start_time_str else None
+                        
+                        # If the parsed start time differs significantly from the marker time,
+                        # consider the marker time more reliable
+                        if parsed_start_hour and abs(parsed_start_hour - marker_hour) > 2:
+                            logging.info(f"Correcting suspicious start time {start_time_str} to match marker time {marker_time}")
+                            start_time_str = marker_time
+                
                 location = ' '.join(location.replace('\n', ' ').split()).strip() if location else None
                 
                 logging.info(f"Detected event in {day_name}: Name='{event_name}', Start='{start_time_str}', End='{end_time_str}', Location='{location}'")

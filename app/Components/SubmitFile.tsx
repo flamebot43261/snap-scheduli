@@ -54,6 +54,7 @@ const SubmitFile: React.FC<CustomFileUploadProps> = ({ width, height }) => {
 
     return (
         <>
+            <Image source={require('../../assets/images/SSLogo.png')} style={{ width: 300, height: 300 }} accessibilityLabel="Logo" />
             {error && <p style={{ color: 'red', fontWeight: 'bold' }}>{error}</p>} 
 
             <div

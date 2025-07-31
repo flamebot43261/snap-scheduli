@@ -64,3 +64,13 @@
   font-size: larger;
   font-weight: bold;
 }
+
+
+.EventBubble {
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 10px 0;
+  width: max-content;
+}

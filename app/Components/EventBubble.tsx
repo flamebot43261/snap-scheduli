@@ -14,7 +14,7 @@ interface CustomFileUploadProps {
     URL?: string;
 }
 
-const EditPage: React.FC<CustomFileUploadProps> = ({ Name, BeginDate, EndDate, BeginTime, EndTime, AllDay, Description, Location, URL }) => {
+const EventBubble: React.FC<CustomFileUploadProps> = ({ Name, BeginDate, EndDate, BeginTime, EndTime, AllDay, Description, Location, URL }) => {
 
 
     return (
@@ -77,4 +77,4 @@ const EditPage: React.FC<CustomFileUploadProps> = ({ Name, BeginDate, EndDate, B
 
 
 
-export default EditPage;
+export default EventBubble;

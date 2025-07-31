@@ -3,12 +3,17 @@ import styles from '../app.module.css';
 import EventBubble from './EventBubble';
 
 interface CustomFileUploadProps {
+  onApiComplete: (status: boolean) => void;
   width?: string;
   height?: string;
 }
 
-const EditPage: React.FC<CustomFileUploadProps> = ({ width, height }) => {
+const EditPage: React.FC<CustomFileUploadProps> = ({ width, height, onApiComplete }) => {
 
+    const handleSubmit = () => {
+        onApiComplete(true);
+        console.log("ICS file ready for download");
+    }
 
     return (
         <>
@@ -51,7 +56,7 @@ const EditPage: React.FC<CustomFileUploadProps> = ({ width, height }) => {
                         Location="Third Location"
                         URL="http://example.com/third"
                     />
-                    <button type="submit" className={styles.uploadButton}>Get Downloadable ICS File</button>
+                    <button type="submit" onClick={handleSubmit} className={styles.uploadButton}>Get Downloadable ICS File</button>
                 </form> 
             </div>
                 

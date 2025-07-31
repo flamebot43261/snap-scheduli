@@ -19,7 +19,8 @@ logging.basicConfig(
 )
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:8081"], supports_credentials=True, allow_headers="*")
+# Allow all origins for development to resolve CORS issues
+CORS(app)
 
 #initialize Google Cloud Vision Client
 vision_client = None

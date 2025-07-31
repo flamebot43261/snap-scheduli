@@ -408,34 +408,34 @@ class ScheduleParser:
         return events
 
 
-if __name__ == "__main__":
-    from google.cloud import vision
-    from OCRService import OCRService
-    import datetime
+# if __name__ == "__main__":
+#     from google.cloud import vision
+#     from OCRService import OCRService
+#     import datetime
 
-    file_path = "/mnt/c/Users/flame/Downloads/test_image.png"
-    client = vision.ImageAnnotatorClient()
-    ocr_service = OCRService(client)
-    with open(file_path, "rb") as img_file:
-        image_bytes = img_file.read()
+#     file_path = "/mnt/c/Users/flame/Downloads/image.png"
+#     client = vision.ImageAnnotatorClient()
+#     ocr_service = OCRService(client)
+#     with open(file_path, "rb") as img_file:
+#         image_bytes = img_file.read()
     
-    result = ocr_service.process_image(image_bytes)
-    print("OCR Result:")
-    print(result)
-    print("------------------------------------")
+#     result = ocr_service.process_image(image_bytes)
+#     print("OCR Result:")
+#     print(result)
+#     print("------------------------------------")
 
-    parser = ScheduleParser()
+#     parser = ScheduleParser()
 
-    semester_start = datetime.date(2025, 5, 12)
-    semester_end = datetime.date(2025, 5, 23)
+#     semester_start = datetime.date(2025, 7, 21)
+#     semester_end = datetime.date(2025, 8, 1)
 
-    print("Parser cleaned Result:")
+#     print("Parser cleaned Result:")
 
-    events = parser.parse_text(result, semester_start, semester_end)
-    print("------------------------------------")
+#     events = parser.parse_text(result, semester_start, semester_end)
+#     print("------------------------------------")
 
-    print("List of Events: \n")
+#     print("List of Events: \n")
 
-    for event in events: 
-        print(event)
-        print("\n")
+#     for event in events: 
+#         print(event)
+#         print("\n")

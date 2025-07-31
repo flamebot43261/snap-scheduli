@@ -12,12 +12,32 @@ class Event:
     
     def to_ics_event(self):
         from ics import Event as IcsEvent
+        import pytz
         ics_event=IcsEvent()
         ics_event.name = self.name
-        ics_event.begin = self.start_time
-        ics_event.end = self.end_time
+
+        #TODO: Need to implement time zone fetch from frontend. using 
+        # EST for testing.
+        local_tz=pytz.timezone('America/New_York')
+
+        if self.start_time.tzinfo is None:
+            start_time_aware=local_tz.localize(self.start_time)
+        else: 
+            start_time_aware=self.start_time
+
+        if self.end_time.tzinfo is None:
+            end_time_aware=local_tz.localize(self.end_time)
+        else: 
+            end_time_aware=self.end_time
+
+
+        ics_event.begin = start_time_aware
+        ics_event.end = end_time_aware
+
+
         if self.location:
             ics_event.location = self.location
+
         if self.recurrence_rule:
             ics_event.rrule = self.recurrence_rule
         

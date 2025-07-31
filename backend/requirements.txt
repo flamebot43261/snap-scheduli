@@ -4,3 +4,4 @@ google-cloud-vision
 python-dateutil
 ics
 Pillow
+pytz

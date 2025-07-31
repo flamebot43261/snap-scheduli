@@ -63,7 +63,7 @@ class ICSExporter:
         
 #         # Define semester start and end dates
 #         semester_start = datetime.date(2025, 5, 12)  # May 12, 2025
-#         semester_end = datetime.date(2025, 8, 15)    
+#         semester_end = datetime.date(2025, 5, 16)
         
 #         # Parse the text to extract events
 #         events = parser.parse_text(ocr_result, semester_start, semester_end)
@@ -86,10 +86,10 @@ class ICSExporter:
 #         print("...")
         
 #         # Save to file (optional)
-#         output_file = "schedule.ics"
-#         with open(output_file, "w") as f:
+#         output_file_path = "/mnt/c/Users/flame/iCloudDrive/UC_SUMMER_2025/software_eng_project/snap-scheduli/config/schedule.ics"
+#         with open(output_file_path, "w") as f:
 #             f.write(ics_content)
-#         print(f"\nFull ICS content saved to {output_file}")
+#         print(f"\nFull ICS content saved to {output_file_path}")
         
 #     except Exception as e:
 #         print(f"Error during testing: {e}")

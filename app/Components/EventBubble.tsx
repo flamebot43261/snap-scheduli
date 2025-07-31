@@ -1,35 +1,73 @@
 import React from 'react';
+import styles from '../app.module.css';
 
 interface CustomFileUploadProps {
-  Name?: string;
-  Date?: Date;
-  Time?: string;
-  Location?: string;
+    UID: number;
+    Name?: string;
+    BeginDate?: Date;
+    EndDate?: Date;
+    BeginTime?: string;
+    EndTime?: string;
+    AllDay?: boolean;
+    Description?: string;
+    Location?: string;
+    URL?: string;
 }
 
-const EditPage: React.FC<CustomFileUploadProps> = ({ Name, Date, Time, Location }) => {
+const EditPage: React.FC<CustomFileUploadProps> = ({ Name, BeginDate, EndDate, BeginTime, EndTime, AllDay, Description, Location, URL }) => {
 
 
     return (
         <>
-            <div>
+            <div className={styles.EventBubble}>
                 <label>
                     Event Name:
                     <input type="text" defaultValue={Name} />
                 </label>
+                <br />
                 <label>
-                    Date:
-                    <input type="date" defaultValue={Date?.toISOString().split('T')[0]} />
+                    BeginDate:
+                    <input type="date" defaultValue={BeginDate?.toISOString().split('T')[0]} />
                 </label>
                 <label>
-                    Time:
-                    <input type="time" defaultValue={Time} />
+                    EndDate:
+                    <input type="date" defaultValue={EndDate?.toISOString().split('T')[0]} />
                 </label>
+                <br />
+                <label>
+                    BeginTime:
+                    <input type="time" defaultValue={BeginTime} />
+                </label>
+                <label>
+                    EndTime:
+                    <input type="time" defaultValue={EndTime} />
+                </label>
+                <label>
+                    All Day:
+                    <input type="checkbox" defaultChecked={AllDay} />
+                </label>
+                <br />
+                <label>
+                    Description:
+                    <textarea style={{
+                        width: "100%",
+                        height: "100px",
+                        resize: "none",
+                        overflowY: "auto",
+                        overflowX: "hidden",
+                        padding: "8px",
+                        boxSizing: "border-box"
+                    }} defaultValue={Description} />
+                </label>
+                <br />
                 <label>
                     Location:
                     <input type="text" defaultValue={Location} />
                 </label>
-                <button type="submit">Confirm Changes</button>
+                <label>
+                    URL:
+                    <input type="text" defaultValue={URL} />
+                </label>
             </div>
         </>
 

@@ -22,6 +22,7 @@ app = Flask(__name__)
 CORS(app, origins=["http://localhost:8081"], supports_credentials=True, allow_headers="*")
 
 #initialize Google Cloud Vision Client
+vision_client = None
 try:
     vision_client = vision.ImageAnnotatorClient()
     logging.info("Google Cloud Vision client initialized successfully.")
@@ -39,12 +40,11 @@ ics_exporter_instance = ICSExporter()
 # orchestrate class calls.
 def convert_picture_to_ics():
     logging.info("Received request to /api/convert-schedule")
-
     #validate file upload
-    if 'file' not in request.files:
-        logging.warning("No 'file' uploaded to the request.")
-        return jsonify({"error": "No file uploaded to the request"}), 400
-    file = request.files['file']
+    if 'image' not in request.files:
+        logging.warning("No 'image' uploaded to the request.")
+        return jsonify({"error": "No image uploaded to the request"}), 400
+    file = request.files['image']
     if file.filename == '':
         logging.warning("No selected file name.")
         return jsonify({"error": "No selected file."}), 400
@@ -52,9 +52,8 @@ def convert_picture_to_ics():
     if not vision_client:
         logging.error("OCR service not initialized. Cannot process request.")
         return jsonify({"error": "Backend OCR service not configured. Please check server logs."}), 500
-    
 
-    try: 
+    try:
         #Read content
         image_content=file.read()
         logging.info(f"File recieved: {file.filename}. Size: {len(image_content)} bytes.")

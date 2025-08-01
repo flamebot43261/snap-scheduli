@@ -83,7 +83,7 @@ class ScheduleParser:
             
         return blocks
 
-    def parse_text(self, full_text_annotation: vision.TextAnnotation, semester_start_date: datetime.date, semester_end_date: datetime.date) -> list:
+    def parse_text(self, full_text_annotation: vision.TextAnnotation, schedule_start_date: datetime.date, schedule_end_date: datetime.date) -> list:
         events = []
         
         if not full_text_annotation or not full_text_annotation.pages:
@@ -369,14 +369,14 @@ class ScheduleParser:
                     logging.error(f"Invalid day name '{day_name}' encountered. Skipping event.")
                     continue
 
-                # Find first occurrence of this day of week within the semester
-                first_occurrence_date = semester_start_date
+                # Find first occurrence of this day of week within the schedule
+                first_occurrence_date = schedule_start_date
                 while first_occurrence_date.weekday() != day_index:
                     first_occurrence_date += timedelta(days=1)
                 
-                # Generate all occurrences of this event within the semester date range
+                # Generate all occurrences of this event within the schedule date range
                 current_date = first_occurrence_date
-                while current_date <= semester_end_date:
+                while current_date <= schedule_end_date:
                     try:
                         # Create datetime objects for this specific occurrence
                         event_start_datetime = date_parser.parse(f"{current_date.isoformat()} {start_time_str}")
@@ -426,12 +426,12 @@ class ScheduleParser:
 
 #     parser = ScheduleParser()
 
-#     semester_start = datetime.date(2025, 7, 21)
-#     semester_end = datetime.date(2025, 8, 1)
+#     schedule_start = datetime.date(2025, 7, 21)
+#     schedule_end = datetime.date(2025, 8, 1)
 
 #     print("Parser cleaned Result:")
 
-#     events = parser.parse_text(result, semester_start, semester_end)
+#     events = parser.parse_text(result, schedule_start, schedule_end)
 #     print("------------------------------------")
 
 #     print("List of Events: \n")

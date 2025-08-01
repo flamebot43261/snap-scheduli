@@ -1,34 +1,65 @@
 from ics import Calendar, Event as IcsEvent
 import logging
-
-#temporary import for  testing
-from datetime import datetime
-
+import re
+from datetime import timedelta
 
 class ICSExporter:
     def __init__(self):
         logging.info("ICSExporter initialized.")
+        self.calendar = Calendar()
     
-    def generate_ics(self, events: list) -> str:
-        c=Calendar()
-
+    def generate_ics(self, events):
+        self.calendar = Calendar()  # Create a fresh calendar
+    
         #edge cases: if no events passed through the parameter
         if not events:
             logging.warning("No events provided to ICSExporter. Generating empty calendar.")
-            return str(c)
+            return self.calendar.serialize()
 
         for event in events:
             try:
-                ics_event=event.to_ics_event()
-                c.events.add(ics_event)
+                # Ensure end time is after start time
+                if event.end_time <= event.start_time:
+                    logging.warning(f"Fixing invalid time range for event: {event.name}")
+                    event.end_time = event.start_time + timedelta(hours=1)
+            
+                # Create a new ICS event
+                ics_event = IcsEvent()
+                
+                # Set basic properties with sanitization
+                ics_event.name = self._sanitize_name(event.name)
+                ics_event.begin = event.start_time
+                ics_event.end = event.end_time
+                
+                # Set location if available
+                if hasattr(event, 'location') and event.location:
+                    ics_event.location = event.location
+                
+                # Set description if available
+                if hasattr(event, 'description') and event.description:
+                    ics_event.description = event.description
+                
+                # Add the event to the calendar
+                self.calendar.events.add(ics_event)
                 logging.debug(f"Added event to calendar: {event.name}")
+                
             except Exception as e:
-                logging.error(f"Error, couldn't add event to calendar: : {event.name}")
-        
-        ics_content=str(c)
+                logging.error(f"Error, couldn't add event to calendar: {str(e)}: {event.name}")
+                # Continue processing other events instead of failing completely
+    
+        ics_content = self.calendar.serialize()  # Changed from str(self.calendar)
 
-        logging.info=(f"Generated ICS content of length {len(ics_content)}.")
+        logging.info(f"Generated ICS content of length {len(ics_content)}.")
         return ics_content
+    
+    def _sanitize_name(self, name):
+        """Clean up event names that might cause issues with ICS format"""
+        if not name:
+            return "Untitled Event"
+        
+        # Simple sanitization - remove problematic characters
+        sanitized = name.replace('\n', ' ').replace('\r', '')
+        return sanitized
     
 # used for testing
 # if __name__ == "__main__":
@@ -61,12 +92,12 @@ class ICSExporter:
 #         print("Parsing schedule from OCR results...")
 #         parser = ScheduleParser()
         
-#         # Define semester start and end dates
-#         semester_start = datetime.date(2025, 5, 12)  # May 12, 2025
-#         semester_end = datetime.date(2025, 5, 16)
+#         # Define schedule start and end dates
+#         schedule_start = datetime.date(2025, 5, 12)  # May 12, 2025
+#         schedule_end = datetime.date(2025, 5, 16)
         
 #         # Parse the text to extract events
-#         events = parser.parse_text(ocr_result, semester_start, semester_end)
+#         events = parser.parse_text(ocr_result, schedule_start, schedule_end)
 #         print(f"Successfully parsed {len(events)} events from the schedule.")
         
 #         # Print a summary of each event

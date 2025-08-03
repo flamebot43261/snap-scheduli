@@ -1,101 +1,86 @@
 # Snap Scheduli
 
-Effortlessly convert your schedule images into a digital calendar format. Snap a picture of your class or work schedule, and let Snap Scheduli generate a standard `.ics` file that you can import into Google Calendar, Apple Calendar, Outlook, and more.
+Snap Scheduli is a web application designed to help students quickly and easily convert a picture of their class schedule into a downloadable `.ics` calendar file. Users can upload an image, review the auto-parsed events, make edits, and generate a calendar file compatible with Google Calendar, Apple Calendar, and other services.
 
-## ✨ Core Features
+## Recent Changes (August 2025)
 
-- **Image to Calendar:** Upload a schedule image (PNG, JPG) and let our AI-powered backend parse it.
-- **Dynamic Event Editing:** Review, modify, add, or delete events on a user-friendly editing page.
-- **Date Range Selection:** Specify the start and end dates for your semester or schedule period.
-- **ICS File Export:** Download your final schedule as a universal `.ics` file.
-- **Cross-Platform:** Built with React Native and Expo, with a web-first approach.
+This project has undergone significant updates to resolve critical bugs, improve debugging, and clean up the codebase.
 
-## 🛠️ Tech Stack
+### 🐛 Core Bug Fixes
 
-- **Frontend:** React, TypeScript, Expo (for web and mobile)
-- **Backend:** Python, Flask
-- **Key Libraries:**
-  - **OCR:** AI-powered text recognition to parse schedule details from images.
-  - **`ics.py`:** For robust `.ics` calendar file generation.
-  - **`Flask-CORS`:** To handle cross-origin requests between the frontend and backend.
+- **Resolved Timezone Conversion Bug**: Fixed a major issue where event end times were being incorrectly converted due to a mismatch between JavaScript's local time (`setHours`) and UTC (`toISOString`) handling. This was the root cause of times like `20:50` (8:50 PM) being saved as `00:50` (12:50 AM).
+- **Stabilized Event Editing**: Implemented logic to prevent the parent `EditPage` component from overriding user edits in the child `EventBubble` component during re-renders, making the editing process more reliable.
 
-## 📂 Project Structure
+### ⚙️ Features & Improvements
 
-```
-snap-scheduli/
-├── app/                # React Native/Expo frontend source code
-│   ├── Components/     # Reusable React components
-│   ├── utilities/      # Helper functions (e.g., apiService.ts)
-│   └── ...
-├── backend/            # Python/Flask backend server
-│   ├── server.py       # Main Flask application
-│   ├── OCRService.py   # Handles image processing and text extraction
-│   ├── ScheduleParser.py # Parses extracted text into structured events
-│   ├── ICSExporter.py  # Generates the .ics file
-│   └── requirements.txt# Python dependencies
-├── assets/             # Static assets like images and icons
-└── README.md           # You are here!
-```
+- **Enhanced Debugging**: Added comprehensive logging on both the frontend (browser console) and backend (terminal) to trace the entire lifecycle of an event, from UI edit to ICS file creation.
 
-## 🚀 Getting Started
+- **Centralized Styling**: Migrated from CSS modules to a single `styles.js` file using React Native's `StyleSheet` API for more consistent and maintainable styling across all components.
 
-Follow these instructions to get the project running on your local machine for development and testing.
+### 🧹 Code Cleanup
 
-### Prerequisites
+- **Archived Unused Files**: Moved numerous old, duplicate, and test files (`EventBubble_OLD.tsx`, `time_debug_test.html`, etc.) into an `archive/` folder to declutter the project.
+- **Streamlined Components**: Replaced the old `EventBubble.tsx` with a new, more stable `EventBubble_NEW.tsx` to contain the time-handling fixes.
 
-- [Node.js](https://nodejs.org/) (LTS version recommended)
-- [Python](https://www.python.org/downloads/) (3.10+) and `pip`
+---
 
-### 1. Backend Setup
+## ⚠️ Known Issues
+
+- **Persistent End Time Bug**: Despite the recent fixes, a stubborn bug remains where user-edited end times are not always reflected in the final `.ics` file.
+  - **Symptom**: A user changes an event's end time to 8:50 PM in the UI. The frontend logs show the time is correctly processed. However, the final `.ics` file shows the event ending at an incorrect time (e.g., 7:00 PM).
+  - **Current Status**: The data appears correct through the entire frontend data flow but seems to be lost or misinterpreted when the backend processes the data to generate the calendar file. This remains the highest priority issue to resolve.
+
+---
+
+## 🚀 Future Improvements
+
+To improve the stability and functionality of Snap Scheduli, the following enhancements are recommended:
+
+1. **Robust Time Handling Library**:
+    - Integrate a dedicated date/time library like `date-fns` or `moment.js`. This would eliminate manual date-string parsing and timezone conversion errors, providing a single source of truth for time handling across the app.
+
+2. **Refactor State Management**:
+    - Replace the current `useState` and prop-drilling approach with a more robust state management solution like **Redux Toolkit** or **Zustand**. This would prevent race conditions and make the app state easier to manage and debug.
+
+3. **Improve UI/UX**:
+    - Add visual feedback (e.g., spinners, success messages) when an event is updated.
+    - Implement a "Save Changes" button that is disabled until an actual change is made.
+    - Improve the layout and responsiveness of the editing interface.
+
+4. **Automated Testing**:
+    - Introduce a testing framework like **Jest** and **React Testing Library**.
+    - Write unit tests for critical functions, especially the time conversion and event parsing logic, to prevent future regressions.
+
+5. **Backend Validation**:
+    - Enhance the Flask backend to perform stricter validation on incoming data from the frontend, immediately rejecting any malformed event data.
+
+---
+
+## 🏃‍♀️ How to Run the Application
+
+### 1. Start the Backend Server
 
 ```bash
-# Navigate to the backend directory
 cd backend
-
-# Create and activate a virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows, use: .venv\Scripts\activate
-
-# Install Python dependencies
+# Make sure you have a virtual environment set up and activated
+source venv/bin/activate 
+# Install dependencies
 pip install -r requirements.txt
-
-# Run the Flask server
-# It will run on http://localhost:3000
+# Run the server
 python server.py
 ```
 
-### 2. Frontend Setup
+The backend will run on `http://localhost:5000`.
+
+### 2. Start the Frontend Application
+
+In a new terminal, navigate to the project root.
 
 ```bash
-# Open a new terminal and navigate to the project root
-cd ..
-
-# Install Node.js dependencies
+# Install dependencies
 npm install
-
-# Start the development server
+# Start the Expo development server
 npm start
 ```
 
-This will open the Expo development server. You can then:
-
-- Press `w` to open the application in your web browser.
-- Scan the QR code with the Expo Go app on your phone to view the mobile version.
-
-## 📝 How to Use
-
-1. Ensure both the backend and frontend servers are running.
-2. Open the application in your browser or on your phone.
-3. On the "Upload" screen, select your schedule image.
-4. You will be taken to the "Edit" page. Here you can review the events parsed from your image. Make any necessary changes, add new events, or delete incorrect ones.
-5. Once you are satisfied, click **"Get Downloadable ICS File"**.
-6. On the "Download" page, click the download link to save your `schedule.ics` file.
-7. Import this file into your preferred calendar application (Google Calendar, Apple Calendar, etc.).
-
-## 🔮 Future Improvements
-
-- **Recurring Events Support:** Enhance the `ScheduleParser` to intelligently detect recurring patterns (e.g., "Mon, Wed, Fri") and generate the appropriate recurrence rules (`RRULE`) in the `.ics` file.
-- **User Accounts & Cloud Sync:** Implement user authentication to allow users to save their schedules and access them across multiple devices.
-- **Direct Calendar Integration:** Add functionality to directly add events to a user's Google Calendar, Outlook, or Apple Calendar via their respective APIs (using OAuth for authorization), bypassing the need for manual `.ics` file import.
-- **UI/UX Overhaul:** Redesign the interface with a focus on mobile-first principles, including native date/time pickers and a more intuitive event editing experience.
-- **Broader Format Support:** Improve the OCR and parsing logic to handle a wider variety of schedule formats, including different layouts and handwritten text.
+This will open a browser tab where you can run the web version of the application, typically on `http://localhost:8081`.

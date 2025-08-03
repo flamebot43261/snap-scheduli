@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Image } from 'react-native';
-import styles from '../app.module.css';
+import { Image, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface DownloadPageProps {
-  width?: string;
-  height?: string;
-  sessionId: string | null;  // Make this required or handle properly
+  width?: number;
+  height?: number;
+  sessionId: string | null;
 }
 
 const DownloadPage: React.FC<DownloadPageProps> = ({ width, height, sessionId }) => {
@@ -18,7 +17,7 @@ const DownloadPage: React.FC<DownloadPageProps> = ({ width, height, sessionId })
         ? `http://localhost:3000/api/downloadICS?session_id=${sessionId}`
         : '';
 
-    const handleDownload = () => {
+    const handleDownload = async () => {
         if (!sessionId) {
             setError("No session ID found. Please go back and try again.");
             return;
@@ -26,83 +25,114 @@ const DownloadPage: React.FC<DownloadPageProps> = ({ width, height, sessionId })
         
         setDownloadStarted(true);
         
-        // Add a verification check to confirm download started
-        setTimeout(() => {
-            setDownloadSuccess(true);
-        }, 1500);
+        try {
+            // For React Native, we'll use Linking to open the download URL
+            await Linking.openURL(downloadUrl);
+            
+            // Add a verification check to confirm download started
+            setTimeout(() => {
+                setDownloadSuccess(true);
+            }, 1500);
+        } catch (e) {
+            console.error("Error opening download URL:", e);
+            setError("Failed to start download. Please try again.");
+        }
     };
 
     return (
-        <div className={styles.downloadContainer || ''} style={{ textAlign: 'center', padding: '20px' }}>
-            <Image source={require('../../assets/images/SSLogo.png')} style={{ width: 300, height: 300 }} accessibilityLabel="Logo" />
+        <View style={styles.container}>
+            <Image 
+                source={require('../../assets/images/SSLogo.png')} 
+                style={styles.logo} 
+                accessibilityLabel="Logo" 
+            />
             
-            {error && <p style={{ color: 'red', fontWeight: 'bold' }}>{error}</p>}
+            {error && <Text style={styles.errorText}>{error}</Text>}
             
-            <div
-                className={styles.uploadBox}
-                style={{ 
-                    width: width || '300px', 
-                    height: height || '200px',
-                    margin: '0 auto',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    border: '2px dashed #ccc',
-                    borderRadius: '8px',
-                    padding: '20px'
-                }}
-            >
+            <View style={[
+                styles.uploadBox,
+                {
+                    width: width || 300,
+                    height: height || 200,
+                }
+            ]}>
                 {sessionId ? (
-                    <a 
-                        href={downloadUrl} 
-                        download="schedule.ics" 
-                        style={{ 
-                            textDecoration: 'none',
-                            color: 'inherit',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                        onClick={handleDownload}
+                    <TouchableOpacity 
+                        style={styles.downloadButton}
+                        onPress={handleDownload}
                     >
                         <Image 
                             source={require('../../assets/images/FileIcon.png')} 
-                            style={{ width: 40, height: 40 }} 
+                            style={styles.icon} 
                             accessibilityLabel="Download Icon" 
                         />
-                        <p>
+                        <Text style={styles.downloadText}>
                             {downloadStarted 
                                 ? (downloadSuccess 
-                                    ? 'Download complete! Click again if needed.' 
+                                    ? 'Download complete! Tap again if needed.' 
                                     : 'Downloading...') 
-                                : 'Click to download .ics file'}
-                        </p>
-                    </a>
+                                : 'Tap to download .ics file'}
+                        </Text>
+                    </TouchableOpacity>
                 ) : (
-                    <div style={{ 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        alignItems: 'center',
-                        justifyContent: 'center', 
-                        height: '100%' 
-                    }}>
-                        <p style={{ color: 'red' }}>No session ID available. Cannot download file.</p>
-                    </div>
+                    <View style={styles.noSessionContainer}>
+                        <Text style={styles.errorText}>No session ID available. Cannot download file.</Text>
+                    </View>
                 )}
-            </div>
-            
-            {/* <div style={{ marginTop: '20px', textAlign: 'center' }}>
-                <h3>How to import your calendar:</h3>
-                <ul style={{ textAlign: 'left', display: 'inline-block' }}>
-                    <li>Google Calendar: Settings > Import & Export > Import</li>
-                    <li>Apple Calendar: File > Import</li>
-                    <li>Outlook: File > Import and Export > Import iCalendar</li>
-                </ul>
-            </div> */}
-        </div>
+            </View>
+        </View>
     );
-}
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        alignItems: 'center',
+        padding: 20,
+    },
+    logo: {
+        width: 300,
+        height: 300,
+        marginBottom: 20,
+    },
+    errorText: {
+        color: 'red',
+        fontWeight: 'bold',
+        marginBottom: 15,
+        textAlign: 'center',
+    },
+    uploadBox: {
+        borderWidth: 2,
+        borderColor: '#ccc',
+        borderStyle: 'dashed',
+        borderRadius: 8,
+        backgroundColor: '#fafafa',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+        marginTop: 20,
+    },
+    downloadButton: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        flex: 1,
+        width: '100%',
+    },
+    icon: {
+        width: 40,
+        height: 40,
+        marginBottom: 10,
+    },
+    downloadText: {
+        fontSize: 16,
+        textAlign: 'center',
+        color: '#333',
+    },
+    noSessionContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+});
 
 export default DownloadPage;

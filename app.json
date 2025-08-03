@@ -34,6 +34,12 @@
           "backgroundColor": "#ffffff"
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow SnapScheduli to access your photos to upload schedule images."
+        }
+      ],
       "expo-web-browser"
     ],
     "experiments": {

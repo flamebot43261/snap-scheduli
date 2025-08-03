@@ -374,9 +374,12 @@ class ScheduleParser:
                 while first_occurrence_date.weekday() != day_index:
                     first_occurrence_date += timedelta(days=1)
                 
-                # Generate all occurrences of this event within the schedule date range
+                # Generate only ONE WEEK of events (for editing purposes)
+                # The frontend will multiply this week by the number of weeks specified
                 current_date = first_occurrence_date
-                while current_date <= schedule_end_date:
+                
+                # Only create events for the first week
+                if current_date <= schedule_end_date:
                     try:
                         # Create datetime objects for this specific occurrence
                         event_start_datetime = date_parser.parse(f"{current_date.isoformat()} {start_time_str}")
@@ -395,15 +398,12 @@ class ScheduleParser:
                             recurrence_rule=None  # No recurrence rule needed for individual events
                         )
                         events.append(new_event)
-                        logging.debug(f"Created event instance: {new_event.name} on {current_date.isoformat()}")
+                        logging.debug(f"Created event instance for first week: {new_event.name} on {current_date.isoformat()}")
                         
                     except Exception as e:
                         logging.error(f"Could not create event for '{event_name}' on {current_date.isoformat()}: {e}")
-                    
-                    # Move to next week
-                    current_date += timedelta(days=7)
                 
-                logging.info(f"Successfully created all instances for: {event_name} on {day_name}")
+                logging.info(f"Successfully created first week instance for: {event_name} on {day_name}")
         
         return events
 

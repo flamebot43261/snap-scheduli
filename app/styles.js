@@ -1,0 +1,96 @@
+// React Native styles to replace app.module.css
+import { StyleSheet } from 'react-native';
+
+export default StyleSheet.create({
+  container: {
+    flex: 1,
+    width: '100%',
+    marginVertical: 40,
+    borderWidth: 1,
+    borderColor: 'black',
+    borderRadius: 12,
+    backgroundColor: '#f5f5f5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  uploadWrapper: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  uploadBox: {
+    width: 300,
+    height: 350,
+    borderWidth: 2,
+    borderColor: '#ccc',
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    backgroundColor: '#fafafa',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  icon: {
+    width: 100,
+    height: 100,
+    marginBottom: 20,
+  },
+  text: {
+    fontSize: 16,
+    color: '#333',
+  },
+  link: {
+    fontSize: 16,
+    color: 'red',
+    marginTop: 5,
+  },
+  uploadButton: {
+    width: '100%',
+    padding: 10,
+    backgroundColor: 'green',
+    borderRadius: 4,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  eventBubble: {
+    backgroundColor: '#f0f0f0',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 20,
+    marginVertical: 10,
+    width: '100%',
+  },
+  deleteButton: {
+    backgroundColor: '#ff5252',
+    padding: 12,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  addButton: {
+    backgroundColor: '#4CAF50',
+    padding: 12,
+    borderRadius: 5,
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  errorMessage: {
+    color: 'red',
+    backgroundColor: '#ffeeee',
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 15,
+    width: '100%',
+    textAlign: 'center',
+  },
+  downloadContainer: {
+    alignItems: 'center',
+    padding: 20,
+  },
+});

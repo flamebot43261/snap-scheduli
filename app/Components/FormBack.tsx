@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import styles from '../app.module.css';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DownloadPage from './DownloadPage';
 import EditPage from './EditPage';
 import SubmitFile from './SubmitFile';
@@ -17,15 +17,18 @@ export interface EventType {
 }
 
 const FormBack = () => {
-    // This should start with 'upload', not 'download'
     const [currentStep, setCurrentStep] = useState<'upload' | 'edit' | 'download'>('upload');
     const [events, setEvents] = useState<EventType[]>([]);
     const [sessionId, setSessionId] = useState<string | null>(null);
+    const [numberOfWeeks, setNumberOfWeeks] = useState<number>(12);
+    const [startDate, setStartDate] = useState<string>('');
     const [error, setError] = useState<string | null>(null);
 
-    const handleUploadSuccess = (uploadedEvents: EventType[], newSessionId: string) => {
+    const handleUploadSuccess = (uploadedEvents: EventType[], newSessionId: string, weeks?: number, startDate?: string) => {
         setEvents(uploadedEvents);
         setSessionId(newSessionId);
+        if (weeks) setNumberOfWeeks(weeks);
+        if (startDate) setStartDate(startDate);
         setCurrentStep('edit');
     };
 
@@ -41,43 +44,92 @@ const FormBack = () => {
     };
 
     return (
-        <div className={styles.box}>
-            {error && <div className={styles.errorMessage}>{error}</div>}
+        <View style={styles.container}>
+            {error && <Text style={styles.errorMessage}>{error}</Text>}
             
             {currentStep === 'upload' && (
                 <SubmitFile 
-                    width="auto" 
-                    height="auto" 
+                    width={300} 
+                    height={200}
                     onUploadSuccess={handleUploadSuccess}
                     onError={setError}
                 />
             )}
             
             {currentStep === 'edit' && (
-                <>
-                    <button onClick={handleBack} className={styles.backButton}>Back to Upload</button>
+                <View style={styles.stepContainer}>
+                    <TouchableOpacity 
+                        style={styles.backButton}
+                        onPress={handleBack}
+                    >
+                        <Text style={styles.backButtonText}>← Back to Upload</Text>
+                    </TouchableOpacity>
                     <EditPage 
-                        width="auto" 
-                        height="auto" 
                         events={events}
+                        originalSessionId={sessionId}
                         onEditComplete={handleEditComplete}
                         onError={setError}
                     />
-                </>
+                </View>
             )}
             
             {currentStep === 'download' && (
-                <>
-                    <button onClick={handleBack} className={styles.backButton}>Back to Edit</button>
+                <View style={styles.stepContainer}>
+                    <TouchableOpacity 
+                        style={styles.backButton}
+                        onPress={handleBack}
+                    >
+                        <Text style={styles.backButtonText}>← Back to Edit</Text>
+                    </TouchableOpacity>
                     <DownloadPage 
-                        width="auto" 
-                        height="auto" 
+                        width={300}
+                        height={200}
                         sessionId={sessionId}
                     />
-                </>
+                </View>
             )}
-        </div>
+        </View>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        width: '90%',
+        maxWidth: 700,
+        marginVertical: 40,
+        marginHorizontal: 'auto',
+        borderWidth: 1,
+        borderColor: 'black',
+        borderRadius: 12,
+        backgroundColor: '#f5f5f5',
+        alignItems: 'center',
+        padding: 20,
+    },
+    stepContainer: {
+        flex: 1,
+        width: '100%',
+        alignItems: 'center',
+    },
+    errorMessage: {
+        backgroundColor: '#ffeeee',
+        color: 'red',
+        padding: 10,
+        borderRadius: 5,
+        marginBottom: 15,
+        width: '100%',
+        textAlign: 'center',
+    },
+    backButton: {
+        alignSelf: 'flex-start',
+        marginBottom: 20,
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+    },
+    backButtonText: {
+        color: 'blue',
+        fontSize: 16,
+    }
+});
 
 export default FormBack;

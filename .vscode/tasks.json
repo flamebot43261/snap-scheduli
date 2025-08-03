@@ -1,0 +1,16 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Start Backend Server",
+			"type": "shell",
+			"command": "/mnt/c/Users/flame/iCloudDrive/UC_SUMMER_2025/software_eng_project/.venv/bin/python",
+			"args": [
+				"backend/server.py"
+			],
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}

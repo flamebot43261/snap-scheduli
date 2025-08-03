@@ -1,58 +1,42 @@
 # Snap Scheduli
 
-Snap Scheduli is a web application designed to help students quickly and easily convert a picture of their class schedule into a downloadable `.ics` calendar file. Users can upload an image, review the auto-parsed events, make edits, and generate a calendar file compatible with Google Calendar, Apple Calendar, and other services.
+Snap Scheduli is a cross-platform application designed to help students quickly and easily convert a picture of their class schedule into a downloadable `.ics` calendar file. Users can upload an image, review the auto-parsed events, make edits, and generate a calendar file compatible with Google Calendar, Apple Calendar, and other services.
 
-## Recent Changes (August 2025)
+## Project Status: Stable (August 2025)
 
-This project has undergone significant updates to resolve critical bugs, improve debugging, and clean up the codebase.
-
-### 🐛 Core Bug Fixes
-
-- **Resolved Timezone Conversion Bug**: Fixed a major issue where event end times were being incorrectly converted due to a mismatch between JavaScript's local time (`setHours`) and UTC (`toISOString`) handling. This was the root cause of times like `20:50` (8:50 PM) being saved as `00:50` (12:50 AM).
-- **Stabilized Event Editing**: Implemented logic to prevent the parent `EditPage` component from overriding user edits in the child `EventBubble` component during re-renders, making the editing process more reliable.
-
-### ⚙️ Features & Improvements
-
-- **Enhanced Debugging**: Added comprehensive logging on both the frontend (browser console) and backend (terminal) to trace the entire lifecycle of an event, from UI edit to ICS file creation.
-
-- **Centralized Styling**: Migrated from CSS modules to a single `styles.js` file using React Native's `StyleSheet` API for more consistent and maintainable styling across all components.
-
-### 🧹 Code Cleanup
-
-- **Archived Unused Files**: Moved numerous old, duplicate, and test files (`EventBubble_OLD.tsx`, `time_debug_test.html`, etc.) into an `archive/` folder to declutter the project.
-- **Streamlined Components**: Replaced the old `EventBubble.tsx` with a new, more stable `EventBubble_NEW.tsx` to contain the time-handling fixes.
+This project has recently undergone a major refactoring to resolve critical bugs, modernize its architecture, and improve maintainability. The core functionality is now stable, and the most significant issues have been addressed.
 
 ---
 
-## ⚠️ Known Issues
+## Major Architectural Changes
 
-- **Persistent End Time Bug**: Despite the recent fixes, a stubborn bug remains where user-edited end times are not always reflected in the final `.ics` file.
-  - **Symptom**: A user changes an event's end time to 8:50 PM in the UI. The frontend logs show the time is correctly processed. However, the final `.ics` file shows the event ending at an incorrect time (e.g., 7:00 PM).
-  - **Current Status**: The data appears correct through the entire frontend data flow but seems to be lost or misinterpreted when the backend processes the data to generate the calendar file. This remains the highest priority issue to resolve.
+The application was fundamentally redesigned to improve reliability and enable cross-platform support.
+
+- **Migration to React Native**: The entire frontend was rebuilt using **Expo and React Native**, replacing the original web-centric design. This enables a single codebase to target both web browsers and native mobile apps (via Expo Go).
+
+- **Refined Backend Architecture**: A more robust, session-based process was implemented.
+  1. The backend parses the image and generates events for a **single base week**.
+  2. This "template" week is sent to the user for editing.
+  3. The final, multi-week `.ics` file is generated on-demand from the user-edited base week, ensuring all corrections are accurately propagated across all recurring events.
+
+- **Component Consolidation**: All duplicate and conflicting `EventBubble` components were deprecated and replaced with a single, stable component. This simplifies maintenance and resolves previous state management conflicts.
+
+- **Centralized API Service**: All network `fetch` calls have been abstracted into a dedicated `apiService.ts` module, making configuration and debugging much easier.
 
 ---
 
-## 🚀 Future Improvements
+## Key Bug Fixes and Improvements
 
-To improve the stability and functionality of Snap Scheduli, the following enhancements are recommended:
+- **✅ Corrected Event Day Spanning**: Fixed a critical bug where an event edited to end late in the evening (e.g., Thursday 8:50 PM) would incorrectly span into the next day (Friday). The logic now ensures the event's start and end times are always anchored to the same calendar day.
 
-1. **Robust Time Handling Library**:
-    - Integrate a dedicated date/time library like `date-fns` or `moment.js`. This would eliminate manual date-string parsing and timezone conversion errors, providing a single source of truth for time handling across the app.
+- **✅ Stabilized Date Editing**: Resolved an issue where manually changing an event's date in the UI would be reverted by the application. The component state logic was improved to respect user input during editing sessions.
 
-2. **Refactor State Management**:
-    - Replace the current `useState` and prop-drilling approach with a more robust state management solution like **Redux Toolkit** or **Zustand**. This would prevent race conditions and make the app state easier to manage and debug.
+- **✅ Enabled Mobile Testing**: Fixed the "Network Error" when running on the Expo Go mobile app by:
+  - Configuring the backend server to accept network connections (`host='0.0.0.0'`).
+  - Correcting the server's CORS policy to allow requests from mobile devices.
+  - Standardizing network ports across the frontend and backend.
 
-3. **Improve UI/UX**:
-    - Add visual feedback (e.g., spinners, success messages) when an event is updated.
-    - Implement a "Save Changes" button that is disabled until an actual change is made.
-    - Improve the layout and responsiveness of the editing interface.
-
-4. **Automated Testing**:
-    - Introduce a testing framework like **Jest** and **React Testing Library**.
-    - Write unit tests for critical functions, especially the time conversion and event parsing logic, to prevent future regressions.
-
-5. **Backend Validation**:
-    - Enhance the Flask backend to perform stricter validation on incoming data from the frontend, immediately rejecting any malformed event data.
+- **🧹 Code Cleanup**: Archived numerous old, duplicate, and test files into an `archive/` folder to declutter the project and create a single source of truth for all components.
 
 ---
 
@@ -61,16 +45,21 @@ To improve the stability and functionality of Snap Scheduli, the following enhan
 ### 1. Start the Backend Server
 
 ```bash
+# Navigate to the backend directory
 cd backend
-# Make sure you have a virtual environment set up and activated
-source venv/bin/activate 
+
+# Set up and activate a Python virtual environment
+python -m venv venv
+source venv/bin/activate
+
 # Install dependencies
 pip install -r requirements.txt
-# Run the server
+
+# Run the server (listens on all network interfaces for mobile testing)
 python server.py
 ```
 
-The backend will run on `http://localhost:5000`.
+The backend will run on `http://localhost:3000`.
 
 ### 2. Start the Frontend Application
 
@@ -79,8 +68,13 @@ In a new terminal, navigate to the project root.
 ```bash
 # Install dependencies
 npm install
+
 # Start the Expo development server
 npm start
 ```
 
-This will open a browser tab where you can run the web version of the application, typically on `http://localhost:8081`.
+This will open a browser tab for web testing. You can also scan the QR code with the Expo Go app on your phone for mobile testing.
+
+### 📱 Note for Mobile Testing
+
+To connect from the Expo Go app on your phone, you must replace `localhost` with your computer's local network IP address in `app/utilities/apiService.ts`.

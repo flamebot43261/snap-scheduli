@@ -70,4 +70,43 @@ export async function uploadScheduleImage(fileInput: File | Blob, startDate?: st
   }
 }
 
-export default { uploadScheduleImage };
+/**
+ * Updates events on the backend (used after editing)
+ */
+export async function updateEvents(events: Array<any>, originalSessionId?: string): Promise<ApiResponse> {
+  try {
+    const response = await fetch('http://localhost:3000/api/update-events', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        events: events,
+        original_session_id: originalSessionId
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Server error (${response.status}): ${errorText}`);
+    }
+
+    const data = await response.json();
+    
+    return { 
+      success: true, 
+      error: false, 
+      message: 'Events updated successfully', 
+      session_id: data.session_id 
+    };
+  } catch (error) {
+    return { 
+      success: false, 
+      error: true, 
+      message: `Network error: ${error instanceof Error ? error.message : 'Unknown error'}`
+    };
+  }
+}
+
+export default { uploadScheduleImage, updateEvents };

@@ -22,7 +22,7 @@ const SubmitFile: React.FC<CustomFileUploadProps> = ({
     const [fileName, setFileName] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [startDate, setStartDate] = useState(new Date());
-    const [numberOfWeeks, setNumberOfWeeks] = useState<string>('12');
+    const [numberOfWeeks, setNumberOfWeeks] = useState<string>('1'); // Changed from '12' to '1'
     const [error, setError] = useState<string | null>(null);
     const [showStartDatePicker, setShowStartDatePicker] = useState(false);
 

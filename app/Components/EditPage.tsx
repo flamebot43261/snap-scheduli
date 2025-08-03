@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import EventBubble from './EventBubble_NEW';
+import { updateEvents } from '../utilities/apiService';
+import EventBubble from './EventBubble';
 import { EventType } from './FormBack';
 
 interface EditPageProps {
@@ -32,7 +33,8 @@ const EditPage: React.FC<EditPageProps> = ({
             name: updatedEvent.name,
             startTime: updatedEvent.startTime,
             endTime: updatedEvent.endTime,
-            location: updatedEvent.location
+            location: updatedEvent.location,
+            description: updatedEvent.description
         });
         
         setEditedEvents(prevEvents => {
@@ -110,27 +112,13 @@ const EditPage: React.FC<EditPageProps> = ({
         console.log('=== END DETAILED SUBMIT DEBUG INFO ===');
         
         try {
-            const response = await fetch('http://localhost:3000/api/update-events', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    events: editedEvents,
-                    original_session_id: originalSessionId 
-                }),
-            });
+            // Use the centralized API service
+            const response = await updateEvents(editedEvents, originalSessionId || undefined);
             
-            if (!response.ok) {
-                throw new Error(`Server error: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            
-            if (data.success && data.session_id) {
-                onEditComplete(editedEvents, data.session_id);
+            if (response.success && response.session_id) {
+                onEditComplete(editedEvents, response.session_id);
             } else {
-                throw new Error(data.error || 'Failed to update events');
+                throw new Error(response.message || 'Failed to update events');
             }
             
         } catch (err) {
@@ -168,10 +156,9 @@ const EditPage: React.FC<EditPageProps> = ({
                         const startDate = new Date(event.startTime);
                         const endDate = new Date(event.endTime);
                         
-                        // Extract time but preserve user edits - don't recalculate every render
-                        // Use a more stable approach that respects what's in the event data
-                        const beginTime = String(startDate.getHours()).padStart(2, '0') + ':' + String(startDate.getMinutes()).padStart(2, '0');
-                        const endTime = String(endDate.getHours()).padStart(2, '0') + ':' + String(endDate.getMinutes()).padStart(2, '0');
+                        // Use the same approach as the working PR #8 - this preserves timezone correctly
+                        const beginTime = startDate.toTimeString().slice(0, 5);
+                        const endTime = endDate.toTimeString().slice(0, 5);
                         
                         console.log(`🔍 EditPage: Rendering EventBubble for "${event.name}"`);
                         console.log(`   📅 Event data from state:`, event);

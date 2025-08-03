@@ -41,3 +41,5 @@ app-example
 backend/__pycache__/
 
 config/
+
+archive/
